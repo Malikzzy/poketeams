@@ -13,40 +13,58 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       # Step 1: Checkout repository
       - uses: actions/checkout@v6
 
-      # Step 2: Configure .NET SDK
+      # Step 2: Intentional failure for Phase 2.1
+      - name: Fails on purpose (DELETE after 2.1)
+        if: matrix.os == 'windows-latest' && github.run_attempt == 1
+        run: |
+          echo "::debug::run_attempt is ${{ github.run_attempt }}"
+          echo "::error title=Practice failure::Windows leg fails on attempt 1 on purpose"
+          exit 1
+
+      # Step 3: Configure .NET SDK
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
-      # Step 3: Cache NuGet packages
+      # Step 4: Cache NuGet packages
       - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
 
-      # Step 4: Restore dependencies with grouped logs
+      # Step 5: Restore dependencies
       - name: Restore
         run: |
           echo "::group::dotnet restore output"
           dotnet restore PokeTeams.sln
           echo "::endgroup::"
 
-      # Step 5: Build application
+      # Step 6: Build application
       - name: Build
         run: dotnet build PokeTeams.sln -c Release --no-restore
 
-      # Step 6: Run tests
+      # Step 7: Run tests
       - name: Test
         run: dotnet test PokeTeams.sln -c Release --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults
 
-      # Step 7: Generate job summary
+      # Step 8: Generate job summary
       - name: Job summary
         if: always()
         run: |
