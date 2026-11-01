@@ -99,7 +99,7 @@ The tests must pass on **both Linux and Windows** (Phase 2 runs a matrix). Avoid
 
 ## Progress (update as phases complete)
 
-- [ ] Part 0 — app scaffold
+- [x] Part 0 — app scaffold (pushed 2026-11-01)
 - [ ] Phase 1 — first CI
 - [ ] Phase 2 — matrix, outputs, artifacts, troubleshooting
 - [ ] Phase 3 — deploy to Azure with OIDC and an environment
