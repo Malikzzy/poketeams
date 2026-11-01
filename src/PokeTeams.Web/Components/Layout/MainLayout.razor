@@ -1,0 +1,35 @@
+@inherits LayoutComponentBase
+@using System.Reflection
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://pokeapi.co/" target="_blank">Data: PokeAPI</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+
+        <footer class="px-4 py-2 border-top small text-muted">
+            PokeTeams version @Version
+        </footer>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    // Set at publish time by CI: -p:InformationalVersion=1.0.<run_number>
+    private static readonly string Version =
+        typeof(MainLayout).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? "unknown";
+}

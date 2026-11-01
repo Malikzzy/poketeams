@@ -1,0 +1,106 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using PokeTeams.Core.Models
+@using PokeTeams.Core.PokeApi
+@using PokeTeams.Web.Services
+@inject PokeApiClient PokeApi
+@inject TeamState Team
+
+<PageTitle>PokeTeams</PageTitle>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <input class="form-control mb-2" placeholder="Search Pokémon..." @bind="search" @bind:event="oninput" />
+        @if (error is not null)
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        else if (all is null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <div class="list-group overflow-auto" style="max-height: 70vh">
+                @foreach (var item in Filtered)
+                {
+                    <button class="list-group-item list-group-item-action text-capitalize @(selected?.Id == item.Id ? "active" : "")"
+                            @onclick="() => SelectAsync(item)">
+                        #@item.Id @item.Name
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-md-3">
+        @if (loadingDetail)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else if (selected is not null)
+        {
+            <div class="text-center">
+                @if (selected.SpriteUrl is not null)
+                {
+                    <img src="@selected.SpriteUrl" alt="@selected.Name" width="120" height="120" />
+                }
+                <h3 class="text-capitalize">@selected.Name</h3>
+                <p class="text-muted">@string.Join(" / ", selected.Types)</p>
+            </div>
+            <StatBars Stats="selected.Stats" />
+            <button class="btn btn-primary mt-3 w-100" disabled="@(Team.IsFull || Team.Contains(selected.Id))"
+                    @onclick="() => Team.Add(selected)">
+                @(Team.Contains(selected.Id) ? "On your team" : Team.IsFull ? "Team is full" : "Add to team")
+            </button>
+        }
+        else
+        {
+            <p class="text-muted">Click a Pokémon to see its stats.</p>
+        }
+    </div>
+
+    <div class="col-md-5">
+        <TeamPanel />
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<PokemonListItem>? all;
+    private Pokemon? selected;
+    private bool loadingDetail;
+    private string search = "";
+    private string? error;
+
+    private IEnumerable<PokemonListItem> Filtered =>
+        all!.Where(p => p.Name.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            all = await PokeApi.ListAsync(151);
+        }
+        catch (HttpRequestException ex)
+        {
+            error = $"Couldn't reach PokeAPI: {ex.Message}";
+        }
+    }
+
+    private async Task SelectAsync(PokemonListItem item)
+    {
+        loadingDetail = true;
+        try
+        {
+            selected = await PokeApi.GetAsync(item.Name);
+        }
+        catch (HttpRequestException ex)
+        {
+            error = $"Couldn't load {item.Name}: {ex.Message}";
+        }
+        finally
+        {
+            loadingDetail = false;
+        }
+    }
+}

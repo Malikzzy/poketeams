@@ -1,0 +1,49 @@
+@using PokeTeams.Core.Teams
+@using PokeTeams.Web.Services
+@implements IDisposable
+@inject TeamState Team
+
+<h4>Your team (@Team.Members.Count/@PokeTeams.Core.Teams.Team.MaxSize)</h4>
+
+@if (Team.Members.Count == 0)
+{
+    <p class="text-muted">No one yet. Pick a Pokémon and click "Add to team".</p>
+}
+else
+{
+    <div class="row row-cols-2 row-cols-lg-3 g-2 mb-3">
+        @foreach (var p in Team.Members)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body p-2 text-center">
+                        @if (p.SpriteUrl is not null)
+                        {
+                            <img src="@p.SpriteUrl" alt="@p.Name" width="72" height="72" />
+                        }
+                        <div class="text-capitalize fw-semibold">@p.Name</div>
+                        <div class="small text-muted">@string.Join(" / ", p.Types)</div>
+                        <div class="small">BST @p.Stats.Total</div>
+                        <button class="btn btn-sm btn-outline-danger mt-1" @onclick="() => Team.Remove(p.Id)">Remove</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <h5>Team totals</h5>
+    <StatBars Stats="TeamAnalyzer.StatTotals(Team.Members)" Max="255 * Team.Members.Count" />
+
+    <div class="alert alert-warning mt-3 py-2">
+        Weakest stat: <strong>@TeamAnalyzer.WeakestStat(Team.Members)</strong>
+    </div>
+    <div class="small">Types covered: @string.Join(", ", TeamAnalyzer.DistinctTypes(Team.Members))</div>
+}
+
+@code {
+    protected override void OnInitialized() => Team.Changed += OnTeamChanged;
+
+    private void OnTeamChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Team.Changed -= OnTeamChanged;
+}

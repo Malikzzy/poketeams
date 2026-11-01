@@ -1,0 +1,19 @@
+@using PokeTeams.Core.Models
+
+@* Simple Bootstrap progress bars. 255 is the highest base stat in the games; pass Max for team totals. *@
+@foreach (var stat in Stats.ToList())
+{
+    <div class="d-flex align-items-center small mb-1">
+        <span class="text-nowrap" style="width: 4.5rem">@stat.Key</span>
+        <span class="text-end me-2" style="width: 2rem">@stat.Value</span>
+        <div class="progress flex-grow-1" style="height: 0.6rem">
+            <div class="progress-bar" style="width: @(Math.Min(100, stat.Value * 100 / Max))%"></div>
+        </div>
+    </div>
+}
+<div class="small fw-semibold">Total: @Stats.Total</div>
+
+@code {
+    [Parameter, EditorRequired] public BaseStats Stats { get; set; } = default!;
+    [Parameter] public int Max { get; set; } = 255;
+}
